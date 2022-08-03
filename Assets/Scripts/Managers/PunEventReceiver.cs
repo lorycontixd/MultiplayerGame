@@ -48,6 +48,22 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                 break;
             case PunEventSender.PlayerSpawnedCode:
                 break;
+            case PunEventSender.ForceCode:
+                object[] data = (object[])photonEvent.CustomData;
+                int playerID = (int)data[0];
+                Vector3 dir = (Vector3)data[1];
+                float force = (float)data[2];
+                Player[] players = GameObject.FindObjectsOfType<Player>();
+                foreach(Player player in players)
+                {
+                    if (player.MyView == playerID)
+                    {
+                        Debug.Log($"I received a force of intensity {force}");
+                        Rigidbody rb = player.gameObject.GetComponent<Rigidbody>();
+                        rb.AddForce(force * dir, ForceMode.Impulse);  
+                    }
+                } 
+                break;
             default:
                 break;
         }

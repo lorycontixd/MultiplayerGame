@@ -24,11 +24,16 @@ public class PunEventSender : MonoBehaviourPunCallbacks
     }
     #endregion
 
+    // Generic
     public const byte ErrorCode = 0;
     public const byte NotificationCode = 1;
 
+    // Pre game
     public const byte StartGameCode = 2;
     public const byte PlayerSpawnedCode = 3;
+
+    // In game
+    public const byte ForceCode = 4;
 
     #region Event Functions
     public void SendError(string errorMsg)
@@ -55,6 +60,13 @@ public class PunEventSender : MonoBehaviourPunCallbacks
     public void SendPlayerSpawned(int playerID)
     {
         object[] content = new object[] { playerID };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; // You would have to set the Receivers to All in order to receive this event on the local client as well
+        PhotonNetwork.RaiseEvent(PlayerSpawnedCode, content, raiseEventOptions, SendOptions.SendReliable);
+    }
+
+    public void SendForce(int targetPlayer, Vector3 dir, float force)
+    {
+        object[] content = new object[] { targetPlayer, dir, force};
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; // You would have to set the Receivers to All in order to receive this event on the local client as well
         PhotonNetwork.RaiseEvent(PlayerSpawnedCode, content, raiseEventOptions, SendOptions.SendReliable);
     }

@@ -3,75 +3,56 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using Lore.Stats;
+using System;
 
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Player))]
 public class PlayerMovement : MonoBehaviourPunCallbacks
 {
-    private CharacterController controller;
-    private Vector3 playerVelocity;
-    private bool groundedPlayer;
-    public float playerSpeed = 2.0f;
-    private float jumpHeight = 1.0f;
-    private float gravityValue = -9.81f;
-    public bool canMove = true;
+    Player player;
+    Rigidbody m_Rigidbody;
 
-    public float mass = 3f;
-    private Vector3 impact = Vector3.zero;
- 
+    private float playerSpeed;
+    private bool canMove;
+    public float pushForce = 3f;
 
-    // call this function to add an impact force:
-    public void AddImpact(Vector3 direction, float force)
+    void Start()
     {
-        direction.Normalize();
-        if (direction.y < 0) direction.y = -direction.y; // reflect down force on the ground
-        impact += direction.normalized * force / mass;
+        //Fetch player component where all stats lie
+        player = GetComponent<Player>();
+        //Fetch the Rigidbody from the GameObject with this script attached
+        m_Rigidbody = GetComponent<Rigidbody>();
+        canMove = photonView.IsMine;
+        playerSpeed = player.MoveSpeed.Value;
+
+        player.MoveSpeed.onValueChange += OnMoveSpeedChange;
     }
 
-
-    private void Start()
+    private void OnMoveSpeedChange(Stat obj)
     {
-        controller = gameObject.AddComponent<CharacterController>();
-
-        canMove = photonView.IsMine;
+        playerSpeed = obj.Value;
     }
 
     public void OnCollisionEnter(Collision collision)
     {
-        if (collision.collider.tag == "Player")
+        Debug.Log($"Colliding with {collision.collider.name}");
+        if ( collision.collider.tag == "Player")
         {
-            collision.gameObject.GetComponent<PlayerMovement>().AddImpact(collision.transform.position - transform.position, 20f);
+            PunEventSender.Instance.SendForce(collision.gameObject.GetComponent<Player>().MyView, collision.transform.position - transform.position, pushForce);
         }
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        groundedPlayer = controller.isGrounded;
-        if (groundedPlayer && playerVelocity.y < 0)
-        {
-            playerVelocity.y = 0f;
-        }
-
         if (canMove)
         {
-            Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-            controller.Move(move * Time.deltaTime * playerSpeed);
+            //Store user input as a movement vector
+            Vector3 m_Input = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 
-            if (move != Vector3.zero)
-            {
-                gameObject.transform.forward = move;
-            }
-
-            if (Input.GetButtonDown("Jump") && groundedPlayer)
-            {
-                playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
-            }
-
-            playerVelocity.y += gravityValue * Time.deltaTime;
-            controller.Move(playerVelocity * Time.deltaTime);
-
-            // apply the impact force:
-            if (impact.magnitude > 0.2) controller.Move(impact * Time.deltaTime);
-            // consumes the impact energy each cycle:
-            impact = Vector3.Lerp(impact, Vector3.zero, 5 * Time.deltaTime);
+            //Apply the movement vector to the current position, which is
+            //multiplied by deltaTime and speed for a smooth MovePosition
+            m_Rigidbody.MovePosition(transform.position + m_Input * Time.deltaTime * playerSpeed);
         }
     }
 }

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20af28ac8ce4e5249ac3582d426e8de4, type: 3}
+  m_Name: ForceFieldAbility
+  m_EditorClassIdentifier: 
+  ID: 0
+  name: Field of Justice
+  description: Fires a field around you that pushes away the enemy and deals damage
+  baseCooldown:
+    BaseValue: 5
+  damage:
+    BaseValue: 100
