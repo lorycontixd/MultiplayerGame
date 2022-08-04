@@ -6,7 +6,7 @@ using Photon.Realtime;
 using Lore.Stats;
 using System;
 
-[RequireComponent(typeof(Rigidbody))]
+/*[RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Player))]
 public class PlayerMovement : MonoBehaviourPunCallbacks
 {
@@ -19,7 +19,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
     [Range(0.18f, 0.5f)]
     public float jumpDuration = 0.27f;
 
-    private float playerSpeed;
+    public float playerSpeed;
     private bool canMove;
     private bool isGrounded;
     private bool canJump;
@@ -47,10 +47,9 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
         Debug.Log($"Colliding with {collision.collider.name}");
         if ( collision.collider.tag == "Player")
         {
+
             int enemyView = collision.gameObject.GetComponent<Player>().photonView.ViewID;
             PunEventSender.Instance.SendForce(enemyView, collision.transform.position - transform.position, CalculatorManager.Instance.CalculatePushForce(basePushForce, playerSpeed, player.Mass));
-            Debug.Log($"Sending damage to player with ID {enemyView}");
-            PunEventSender.Instance.SendDamage(enemyView, player.Damage.Value) ;
         }
         if (collision.collider.tag == "Ground" && !isGrounded)
         {
@@ -105,4 +104,60 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
             }
         }
     }
+}
+*/
+
+public class PlayerMovement : MonoBehaviourPunCallbacks
+{
+    public Player player;
+    private CharacterController controller;
+    private Vector3 playerVelocity;
+    private bool groundedPlayer;
+    private float playerSpeed;
+    private float jumpHeight = 1.0f;
+    private float gravityValue = -9.81f;
+    private bool canMove;
+
+    private void Start()
+    {
+        if (!photonView.IsMine)
+        {
+            return;
+        }
+        player = GetComponent<Player>();
+        controller = gameObject.AddComponent<CharacterController>();
+        playerSpeed = player.MoveSpeed.Value;
+        canMove = true;
+    }
+
+    void Update()
+    {
+        if (photonView.IsMine)
+        {
+            groundedPlayer = controller.isGrounded;
+            if (groundedPlayer && playerVelocity.y < 0)
+            {
+                playerVelocity.y = 0f;
+            }
+
+            if (canMove)
+            {
+                Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+                controller.Move(move * Time.deltaTime * playerSpeed);
+
+                if (move != Vector3.zero)
+                {
+                    gameObject.transform.forward = move;
+                }
+
+                // Changes the height position of the player..
+                if (Input.GetButtonDown("Jump") && groundedPlayer)
+                {
+                    playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
+                }
+
+                playerVelocity.y += gravityValue * Time.deltaTime;
+                controller.Move(playerVelocity * Time.deltaTime);
+            }
+        }    }
 }

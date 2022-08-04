@@ -31,6 +31,7 @@ public class UIManager : MonoBehaviourPunCallbacks
     public GameObject waitingForPlayersPanel;
     public GameObject playersTabPanel;
     public GameObject deathPanel;
+    public GameObject gamePanel;
 
     [Header("Starting components")]
     public InputField usernameField;
@@ -60,11 +61,19 @@ public class UIManager : MonoBehaviourPunCallbacks
     public float pingCooldown = 5f;
     private float pingTimer;
 
+    [Header("Game components")]
+    public Text player1Name;
+    public Text player1Health;
+    public Text player2Name;
+    public Text player2Health;
+
     [Header("Prefabs")]
     public GameObject debugTextPrefab;
 
     [Header("Variables")]
     public float debugMessageDuration = 2f;
+    public Player player1;
+    public Player player2;
 
     private void Start()
     {
@@ -73,6 +82,7 @@ public class UIManager : MonoBehaviourPunCallbacks
         waitingForPlayersPanel.SetActive(false);
         playersTabPanel.SetActive(false);
         deathPanel.SetActive(false);
+        gamePanel.SetActive(false);
         connectingText.gameObject.SetActive(false);
     }
 
@@ -92,6 +102,24 @@ public class UIManager : MonoBehaviourPunCallbacks
                 playersTabPanel.SetActive(false);
             }
             UpdatePlayersTabPings();
+            UpdatePlayerHealths();
+        }
+    }
+
+    public void UpdatePlayerHealths()
+    {
+        gamePanel.SetActive(true);
+        Player[] players = GameObject.FindObjectsOfType<Player>();
+        foreach (Player p in players)
+        {
+            if (p.photonView.IsMine)
+            {
+                player1Health.text = p.health.ToString();
+            }
+            else
+            {
+                player2Health.text = p.health.ToString();
+            }
         }
     }
 

@@ -13,7 +13,7 @@ public class Player : MonoBehaviourPunCallbacks
     public Stat Damage;
     public Stat MoveSpeed;
     public float MaxHealth;
-    private float health;
+    public float health;
     public float Mass;
 
     void Start()
