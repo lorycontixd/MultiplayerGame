@@ -34,41 +34,66 @@ public class PunEventSender : MonoBehaviourPunCallbacks
 
     // In game
     public const byte ForceCode = 4;
+    public const byte DamageCode = 5;
+    public const byte SpawnPowerupCode = 6;
+    public const byte PickupPowerupCode = 7;
 
     #region Event Functions
     public void SendError(string errorMsg)
     {
         object[] content = new object[] {errorMsg} ; 
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; // You would have to set the Receivers to All in order to receive this event on the local client as well
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; 
         PhotonNetwork.RaiseEvent(ErrorCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
     public void SendNotification(string notification)
     {
         object[] content = new object[] { notification };
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; // You would have to set the Receivers to All in order to receive this event on the local client as well
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; 
         PhotonNetwork.RaiseEvent(NotificationCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
     public void SendStartGame()
     {
         object[] content = new object[] { };
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; // You would have to set the Receivers to All in order to receive this event on the local client as well
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; 
         PhotonNetwork.RaiseEvent(StartGameCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
     public void SendPlayerSpawned(int playerID)
     {
         object[] content = new object[] { playerID };
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; // You would have to set the Receivers to All in order to receive this event on the local client as well
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; 
         PhotonNetwork.RaiseEvent(PlayerSpawnedCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
     public void SendForce(int targetPlayer, Vector3 dir, float force)
     {
         object[] content = new object[] { targetPlayer, dir, force};
-        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; // You would have to set the Receivers to All in order to receive this event on the local client as well
-        PhotonNetwork.RaiseEvent(PlayerSpawnedCode, content, raiseEventOptions, SendOptions.SendReliable);
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
+        PhotonNetwork.RaiseEvent(ForceCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
+
+    public void SendDamage(int targetPlayer, float damage)
+    {
+        object[] content = new object[] { targetPlayer, damage };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; 
+        PhotonNetwork.RaiseEvent(DamageCode, content, raiseEventOptions, SendOptions.SendReliable);
+    }
+
+    public void SendPowerupSpawn(int powerUpIndex, Vector3 pos)
+    {
+        object[] content = new object[] { powerUpIndex, pos };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
+        PhotonNetwork.RaiseEvent(SpawnPowerupCode, content, raiseEventOptions, SendOptions.SendReliable);
+    }
+
+    public void SendPowerUpPickUp(int powerupID)
+    {
+        object[] content = new object[] { powerupID };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
+        PhotonNetwork.RaiseEvent(PickupPowerupCode, content, raiseEventOptions, SendOptions.SendReliable);
+    }
+
     #endregion
-}
+    }

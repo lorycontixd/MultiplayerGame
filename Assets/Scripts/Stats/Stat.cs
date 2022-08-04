@@ -7,9 +7,7 @@ namespace Lore.Stats
     public enum StatType
     {
         MoveSpeed,
-        Intelligence,
-        Bargaining,
-        Stealth
+        Damage
     }
 
     [Serializable]

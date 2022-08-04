@@ -30,11 +30,16 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public CinemachineVirtualCamera virtualCamera;
     public GameObject playerPrefab;
     public GameObject mainCamera;
-    public Transform centerSpawner;
+
+    public bool playersConnected = false;
+
+    public List<Transform> spawnPoints;
 
     public void StartGame()
     {
-        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, new Vector3( centerSpawner.position.x + Random.Range(-10f, 10f), centerSpawner.position.y + Random.Range(-10f, 10f), centerSpawner.position.z), Quaternion.identity);
+        int sp = Random.Range(0, spawnPoints.Count-1);
+        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name,spawnPoints[sp].position, Quaternion.identity);
+
         virtualCamera.Follow = player.transform;
         virtualCamera.LookAt = player.transform;
 
@@ -71,6 +76,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         }
         else if (PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
         {
+            playersConnected = true;
             StartGame();
         }
     }
@@ -98,6 +104,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
         {
+            playersConnected = true;
             StartGame();
         }
     }

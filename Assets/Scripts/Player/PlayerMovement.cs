@@ -15,7 +15,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
 
     private float playerSpeed;
     private bool canMove;
-    public float pushForce = 3f;
+    public float basePushForce = 3f;
 
     void Start()
     {
@@ -25,21 +25,20 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
         m_Rigidbody = GetComponent<Rigidbody>();
         canMove = photonView.IsMine;
         playerSpeed = player.MoveSpeed.Value;
-
-        player.MoveSpeed.onValueChange += OnMoveSpeedChange;
-    }
-
-    private void OnMoveSpeedChange(Stat obj)
-    {
-        playerSpeed = obj.Value;
+        m_Rigidbody.mass = player.Mass;
     }
 
     public void OnCollisionEnter(Collision collision)
     {
+        if (!photonView.IsMine) {
+            return;
+        }
         Debug.Log($"Colliding with {collision.collider.name}");
         if ( collision.collider.tag == "Player")
         {
-            PunEventSender.Instance.SendForce(collision.gameObject.GetComponent<Player>().MyView, collision.transform.position - transform.position, pushForce);
+            int enemyView = collision.gameObject.GetComponent<Player>().MyView;
+            PunEventSender.Instance.SendForce(enemyView, collision.transform.position - transform.position, CalculatorManager.Instance.CalculatePushForce(basePushForce, playerSpeed, player.Mass));
+            PunEventSender.Instance.SendDamage(enemyView, player.Damage.Value) ;
         }
     }
 
@@ -47,6 +46,7 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
     {
         if (canMove)
         {
+            playerSpeed = player.MoveSpeed.Value;
             //Store user input as a movement vector
             Vector3 m_Input = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 
