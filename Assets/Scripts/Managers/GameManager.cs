@@ -44,11 +44,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     [Tooltip("List of powerup prefabs to spawn")]
     public List<GameObject> powerUps;
 
-    public float powerUpSpawnXMIN = 3f;
-    public float powerUpSpawnZMIN = -3f;
-    public float powerUpSpawnXMAX = 97f;
-    public float powerUpSpawnZMAX = -97f;
-    public float powerUpSpawnY = 1.1f;
+    public float powerUpSpawnXMIN = -44f;
+    public float powerUpSpawnZMIN = -44f;
+    public float powerUpSpawnXMAX = 44f;
+    public float powerUpSpawnZMAX = 44f;
+    public float powerUpSpawnY = 3.1f;
 
     private int powerUpCount;
     private float powerUpTimer;
@@ -85,7 +85,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (powerUpCount < maxPowerUpCount)
         {
-            int randomPowerUp = Random.Range(0, powerUps.Count - 1);
+            int randomPowerUp = Random.Range(0, powerUps.Count );
             Debug.Log($"random number powerup: {randomPowerUp}");
             Vector3 pos = new Vector3(
                 Random.Range(powerUpSpawnXMIN, powerUpSpawnXMAX),

@@ -84,7 +84,7 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                     {
                         Debug.Log($"I received a force of intensity {force}");
                         Rigidbody rb = player.gameObject.GetComponent<Rigidbody>();
-                        rb.AddForce(force * dir, ForceMode.Impulse);
+                        rb.AddForce(force * dir, ForceMode.VelocityChange);
                     }
                 }
                 break;
@@ -93,8 +93,17 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                     object[] data = (object[])photonEvent.CustomData;
                     int playerID = (int)data[0];
                     float damage = (float)data[1];
-                    Player p = GetPlayer(playerID);
-                    p.TakeDamage(damage);
+                    GameObject[] playersGO = GameObject.FindGameObjectsWithTag("Player");
+                    foreach (GameObject go in playersGO)
+                    {
+                        Player player = go.GetComponent<Player>();
+                        Debug.Log($"Searching player for damage: {playerID}/{player.photonView.ViewID}");
+                        if (player.photonView.ViewID == playerID)
+                        {
+                            Debug.Log("Found!!");
+                            player.TakeDamage(damage);
+                        }
+                    }
                 }
                 break;
             case PunEventSender.SpawnPowerupCode:
@@ -114,9 +123,28 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                     {
                         if (powerup.number == powerupIndex)
                         {
+                            Debug.Log($"Destroying buff with number {powerup.number}");
                             Destroy(powerup.gameObject);
                             break;
                         }
+                    }
+                }
+                break;
+            case PunEventSender.PingCode:
+                {
+                    object[] data = (object[])photonEvent.CustomData;
+                    int playerID = (int)data[0];
+                    int ping = (int)data[1];
+                    if (playerID == 0)
+                    {
+                        UIManager.Instance.player1Ping = ping;
+                    }else if (playerID == 1)
+                    {
+                        UIManager.Instance.player2Ping = ping;
+                    }
+                    else
+                    {
+                        PunEventSender.Instance.SendError($"Invalid playerID for ping communication_ {playerID}");
                     }
                 }
                 break;

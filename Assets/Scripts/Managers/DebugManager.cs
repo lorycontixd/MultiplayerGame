@@ -21,6 +21,6 @@ public class DebugManager : MonoBehaviour
     {
         output = logString;
         stack = stackTrace;
-        UIManager.Instance.Debug($"{stack}");
+        UIManager.Instance.DebugMessage($"{stack}");
     }
 }

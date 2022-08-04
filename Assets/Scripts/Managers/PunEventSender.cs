@@ -31,6 +31,7 @@ public class PunEventSender : MonoBehaviourPunCallbacks
     // Pre game
     public const byte StartGameCode = 2;
     public const byte PlayerSpawnedCode = 3;
+    public const byte PingCode = 8;
 
     // In game
     public const byte ForceCode = 4;
@@ -76,6 +77,7 @@ public class PunEventSender : MonoBehaviourPunCallbacks
 
     public void SendDamage(int targetPlayer, float damage)
     {
+        Debug.Log($"[PunSender] Sending damage to {targetPlayer}");
         object[] content = new object[] { targetPlayer, damage };
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; 
         PhotonNetwork.RaiseEvent(DamageCode, content, raiseEventOptions, SendOptions.SendReliable);
@@ -93,6 +95,13 @@ public class PunEventSender : MonoBehaviourPunCallbacks
         object[] content = new object[] { powerupID };
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
         PhotonNetwork.RaiseEvent(PickupPowerupCode, content, raiseEventOptions, SendOptions.SendReliable);
+    }
+
+    public void SendPing(int playerID, int ping)
+    {
+        object[] content = new object[] { playerID, ping };
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
+        PhotonNetwork.RaiseEvent(PingCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
     #endregion

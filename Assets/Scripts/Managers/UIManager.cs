@@ -29,6 +29,8 @@ public class UIManager : MonoBehaviourPunCallbacks
     public GameObject startingPanel;
     public GameObject debugPanel;
     public GameObject waitingForPlayersPanel;
+    public GameObject playersTabPanel;
+    public GameObject deathPanel;
 
     [Header("Starting components")]
     public InputField usernameField;
@@ -41,6 +43,23 @@ public class UIManager : MonoBehaviourPunCallbacks
     [Header("Waiting for players components")]
     public TextMeshProUGUI waitingForPlayersText;
 
+    [Header("Players Tab Components")]
+    public TextMeshProUGUI player1Text;
+    public TextMeshProUGUI player2Text;
+    public TextMeshProUGUI player1PingText;
+    public TextMeshProUGUI player2PingText;
+    public TextMeshProUGUI player1Host;
+    public TextMeshProUGUI player2Host;
+    public TextMeshProUGUI roomNameText;
+    public int player1Ping;
+    public int player2Ping;
+
+    public int greenPingThreshold = 60;
+    public int yellowPingThreshold = 120;
+
+    public float pingCooldown = 5f;
+    private float pingTimer;
+
     [Header("Prefabs")]
     public GameObject debugTextPrefab;
 
@@ -52,7 +71,76 @@ public class UIManager : MonoBehaviourPunCallbacks
         startingPanel.SetActive(true);
         debugPanel.SetActive(true);
         waitingForPlayersPanel.SetActive(false);
+        playersTabPanel.SetActive(false);
+        deathPanel.SetActive(false);
         connectingText.gameObject.SetActive(false);
+    }
+
+
+    private void Update()
+    {
+        Debug.Log("PING: "+PhotonNetwork.GetPing());
+        if (NetworkManager.Instance.playersConnected)
+        {
+            // Players tab
+            if (Input.GetKey(KeyCode.Tab))
+            {
+                playersTabPanel.SetActive(true);
+            }
+            else
+            {
+                playersTabPanel.SetActive(false);
+            }
+            UpdatePlayersTabPings();
+        }
+    }
+
+
+    public IEnumerator SetupPlayersTab()
+    {
+        yield return new WaitUntil(() => NetworkManager.Instance.playersConnected);
+        player1Text.text = PhotonNetwork.CurrentRoom.Players[0].NickName;
+        player2Text.text = PhotonNetwork.CurrentRoom.Players[1].NickName;
+        player1Host.text = PhotonNetwork.CurrentRoom.Players[0].IsMasterClient ? "Host" : "";
+        player2Host.text = PhotonNetwork.CurrentRoom.Players[1].IsMasterClient ? "Host" : "";
+        roomNameText.text = PhotonNetwork.CurrentRoom.Name;
+    }
+
+    public void UpdatePlayersTabPings()
+    {
+        if (NetworkManager.Instance.playersConnected && playersTabPanel.activeSelf)
+        {
+            if (pingTimer <= GameManager.Instance.GameTime)
+            {
+                PunEventSender.Instance.SendPing(PhotonNetwork.LocalPlayer.ActorNumber, PhotonNetwork.GetPing());
+                player1PingText.text = player1Ping.ToString();
+                if (player1Ping < greenPingThreshold)
+                {
+                    player1PingText.color = Color.green;
+                }else if (player1Ping >= greenPingThreshold && player1Ping < yellowPingThreshold)
+                {
+                    player1PingText.color = Color.yellow;
+                }
+                else
+                {
+                    player1PingText.color = Color.red;
+                }
+                player2PingText.text = player2Ping.ToString();
+                if (player2Ping < greenPingThreshold)
+                {
+                    player2PingText.color = Color.green;
+                }
+                else if (player2Ping >= greenPingThreshold && player2Ping < yellowPingThreshold)
+                {
+                    player2PingText.color = Color.yellow;
+                }
+                else
+                {
+                    player2PingText.color = Color.red;
+                }
+                pingTimer = GameManager.Instance.GameTime + pingCooldown;
+            }
+        }
     }
 
     public void OnConnectButton()
@@ -73,18 +161,21 @@ public class UIManager : MonoBehaviourPunCallbacks
         startingPanel.SetActive(false);
     }
 
-    public void Debug(string text)
+    public void DebugMessage(string text)
     {
-        StartCoroutine(DebugCoroutine(text));
+        StartCoroutine(DebugMessageCoroutine(text));
+
     }
 
-    public IEnumerator DebugCoroutine(string text)
+    public IEnumerator DebugMessageCoroutine(string text)
     {
         debugPanel.gameObject.SetActive(true);
         GameObject clone = Instantiate(debugTextPrefab, debugPanel.transform);
         clone.GetComponent<TextMeshProUGUI>().text = text;
         yield return new WaitForSeconds(debugMessageDuration);
         Destroy(clone.gameObject);
+        yield return new WaitForSeconds(0.05f);
+        Debug.Log($"childcount: {debugPanel.transform.childCount}");
         if (debugPanel.transform.childCount <= 0)
         {
             debugPanel.SetActive(false);
@@ -94,7 +185,7 @@ public class UIManager : MonoBehaviourPunCallbacks
     #region Pun Callbacks
     public override void OnJoinedRoom()
     {
-        Debug($"Joind room {PhotonNetwork.CurrentRoom.Name}");
+        DebugMessage($"Joined room {PhotonNetwork.CurrentRoom.Name}");
         DisableStartingUI();
         if (PhotonNetwork.CurrentRoom.PlayerCount < PhotonNetwork.CurrentRoom.MaxPlayers)
         {
@@ -108,7 +199,7 @@ public class UIManager : MonoBehaviourPunCallbacks
 
     public override void OnCreatedRoom()
     {
-        Debug($"Created room {PhotonNetwork.CurrentRoom.Name}");
+        DebugMessage($"Created room {PhotonNetwork.CurrentRoom.Name}");
     }
 
     public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)

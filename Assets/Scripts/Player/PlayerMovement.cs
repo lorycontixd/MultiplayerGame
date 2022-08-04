@@ -13,9 +13,18 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
     Player player;
     Rigidbody m_Rigidbody;
 
+    public float basePushForce = 15f;
+    [Range(2.8f, 7f)]
+    public float jumpHeight = 5.2f;
+    [Range(0.18f, 0.5f)]
+    public float jumpDuration = 0.27f;
+
     private float playerSpeed;
     private bool canMove;
-    public float basePushForce = 3f;
+    private bool isGrounded;
+    private bool canJump;
+    private float jumpTimer;
+    private bool jumpTimerActive = false;
 
     void Start()
     {
@@ -26,6 +35,8 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
         canMove = photonView.IsMine;
         playerSpeed = player.MoveSpeed.Value;
         m_Rigidbody.mass = player.Mass;
+        isGrounded = true;
+        canJump = true;
     }
 
     public void OnCollisionEnter(Collision collision)
@@ -36,9 +47,43 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
         Debug.Log($"Colliding with {collision.collider.name}");
         if ( collision.collider.tag == "Player")
         {
-            int enemyView = collision.gameObject.GetComponent<Player>().MyView;
+            int enemyView = collision.gameObject.GetComponent<Player>().photonView.ViewID;
             PunEventSender.Instance.SendForce(enemyView, collision.transform.position - transform.position, CalculatorManager.Instance.CalculatePushForce(basePushForce, playerSpeed, player.Mass));
+            Debug.Log($"Sending damage to player with ID {enemyView}");
             PunEventSender.Instance.SendDamage(enemyView, player.Damage.Value) ;
+        }
+        if (collision.collider.tag == "Ground" && !isGrounded)
+        {
+            isGrounded = true;
+            canJump = true;
+            jumpTimerActive = false;
+            jumpTimer = 0f;
+        }
+    }
+
+    public void OnCollisionExit(Collision collision)
+    {
+        Debug.Log($"Left collision with {collision.collider.name}");
+        if (collision.collider.tag == "Ground" && isGrounded)
+        {
+            isGrounded = false;
+            jumpTimerActive = true;
+        }
+    }
+
+    private void Update()
+    {
+        if (jumpTimerActive)
+        {
+            jumpTimer += Time.deltaTime;
+            if (jumpTimer > jumpDuration)
+            {
+                canJump = false;
+            }
+        }
+        if (!isGrounded)
+        {
+            m_Rigidbody.AddForce(Vector3.down * jumpTimer * 9.81f, ForceMode.Acceleration);
         }
     }
 
@@ -48,11 +93,16 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
         {
             playerSpeed = player.MoveSpeed.Value;
             //Store user input as a movement vector
-            Vector3 m_Input = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+            Vector3 m_Input = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
 
             //Apply the movement vector to the current position, which is
             //multiplied by deltaTime and speed for a smooth MovePosition
             m_Rigidbody.MovePosition(transform.position + m_Input * Time.deltaTime * playerSpeed);
+            float jump = Input.GetAxis("Jump");
+            if (jump > 0 && canJump)
+            {
+                m_Rigidbody.AddForce(Vector3.up * jumpHeight, ForceMode.Impulse);
+            }
         }
     }
 }

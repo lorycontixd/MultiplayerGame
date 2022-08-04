@@ -42,6 +42,7 @@ public class Player : MonoBehaviourPunCallbacks
     public void Die()
     {
         Debug.Log("Dead!!");
+        UIManager.Instance.deathPanel.SetActive(true);
     }
     #endregion
 }
