@@ -53,7 +53,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void StartGame(int spawnIndex)
     {
-        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name,spawnPoints[spawnIndex].position, Quaternion.identity);
+        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name,spawnPoints[spawnIndex].position, playerPrefab.transform.localRotation);
 
         virtualCamera.Follow = player.transform;
         virtualCamera.LookAt = player.transform;

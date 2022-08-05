@@ -107,27 +107,50 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
 }
 */
 
-public class PlayerMovement : MonoBehaviourPunCallbacks
+public class PlayerMovement : MonoBehaviourPunCallbacks, IPunObservable
 {
     public Player player;
-    private CharacterController controller;
+    public CharacterController controller;
+    public float energyDissipationCoefficient = 5f; // How fast the impact force decays
+    private Vector3 lastPosition;
+    private Vector3 lastPlayerVelocity;
+    private float jumpVelocity;
     private Vector3 playerVelocity;
     private bool groundedPlayer;
     private float playerSpeed;
     private float jumpHeight = 1.0f;
     private float gravityValue = -9.81f;
     private bool canMove;
+    private Vector3 impact; // momentum vector after force
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(transform.position);
+            stream.SendNext(transform.rotation);
+            stream.SendNext(playerVelocity);
+        }
+        else
+        {
+            transform.position = (Vector3)stream.ReceiveNext();
+            transform.rotation = (Quaternion)stream.ReceiveNext();
+            playerVelocity = (Vector3)stream.ReceiveNext();
+
+            float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTime));
+            transform.position += playerVelocity * lag;
+        }
+    }
 
     private void Start()
     {
-        if (!photonView.IsMine)
+        if (photonView.IsMine)
         {
-            return;
+            player = GetComponent<Player>();
+            controller = gameObject.AddComponent<CharacterController>();
+            playerSpeed = player.MoveSpeed.Value;
+            canMove = true;
         }
-        player = GetComponent<Player>();
-        controller = gameObject.AddComponent<CharacterController>();
-        playerSpeed = player.MoveSpeed.Value;
-        canMove = true;
     }
 
     void Update()
@@ -135,15 +158,17 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
         if (photonView.IsMine)
         {
             groundedPlayer = controller.isGrounded;
-            if (groundedPlayer && playerVelocity.y < 0)
+            playerSpeed = player.MoveSpeed.Value;
+            if (groundedPlayer && jumpVelocity < 0)
             {
-                playerVelocity.y = 0f;
+                jumpVelocity = 0f;
             }
 
             if (canMove)
             {
                 Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-                controller.Move(move * Time.deltaTime * playerSpeed);
+                playerVelocity = move * playerSpeed;
+                controller.Move(playerVelocity * Time.deltaTime);
 
                 if (move != Vector3.zero)
                 {
@@ -153,11 +178,38 @@ public class PlayerMovement : MonoBehaviourPunCallbacks
                 // Changes the height position of the player..
                 if (Input.GetButtonDown("Jump") && groundedPlayer)
                 {
-                    playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
+                    jumpVelocity += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
                 }
 
-                playerVelocity.y += gravityValue * Time.deltaTime;
-                controller.Move(playerVelocity * Time.deltaTime);
+                jumpVelocity += gravityValue * Time.deltaTime;
+                controller.Move(new Vector3(0f, jumpVelocity, 0f) * Time.deltaTime);
             }
-        }    }
+            if (impact.magnitude > 0.2)
+            {
+                controller.Move(impact * Time.deltaTime);
+                impact = Vector3.Lerp(impact, Vector3.zero, energyDissipationCoefficient * Time.deltaTime);
+            }
+            lastPosition = transform.position;
+            lastPlayerVelocity = playerVelocity;
+        }
+    }
+
+    public void AddForce(Vector3 force)
+    {
+        Vector3 direction = force.normalized;
+        if (direction.y < 0) direction.y = -direction.y; // reflect down force on the ground
+        impact += force;
+    }
+
+    public float KineticEnergy()
+    {
+        return 0.5f * player.Mass * Mathf.Pow(playerVelocity.magnitude, 2);
+    }
+
+    public Vector3 GetPlayerVelocity()
+    {
+        return playerVelocity;
+    }
+
+    public Vector3 GetLastPlayerVelocity() { return lastPlayerVelocity; }
 }

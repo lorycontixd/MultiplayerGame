@@ -19,9 +19,4 @@ public class PowerUp : MonoBehaviour
     {
         modifier = new StatModifier(modValue, modType, source: this);
     }
-
-    public void OnPickUp()
-    {
-        Destroy(gameObject);
-    }
 }

@@ -68,9 +68,9 @@ public class PunEventSender : MonoBehaviourPunCallbacks
         PhotonNetwork.RaiseEvent(PlayerSpawnedCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
-    public void SendForce(int targetPlayer, Vector3 dir, float force)
+    public void SendForce(int targetPlayer, Vector3 force)
     {
-        object[] content = new object[] { targetPlayer, dir, force};
+        object[] content = new object[] { targetPlayer, force};
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
         PhotonNetwork.RaiseEvent(ForceCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
@@ -90,9 +90,9 @@ public class PunEventSender : MonoBehaviourPunCallbacks
         PhotonNetwork.RaiseEvent(SpawnPowerupCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
-    public void SendPowerUpPickUp(int powerupID)
+    public void SendPowerUpPickUp(int playerID, int powerupID)
     {
-        object[] content = new object[] { powerupID };
+        object[] content = new object[] { playerID, powerupID };
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
         PhotonNetwork.RaiseEvent(PickupPowerupCode, content, raiseEventOptions, SendOptions.SendReliable);
     }

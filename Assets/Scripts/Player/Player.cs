@@ -6,9 +6,10 @@ using Photon.Pun;
 using Photon.Realtime;
 using Lore.Stats;
 
-public class Player : MonoBehaviourPunCallbacks
+public class Player : MonoBehaviourPunCallbacks, IPunObservable
 {
-    public int MyView { get { return photonView.ViewID; } }
+    [Tooltip("The local player instance. Use this to know if the local player is represented in the Scene")]
+    public static GameObject LocalPlayerInstance;
 
     public Stat Damage;
     public Stat MoveSpeed;
@@ -18,8 +19,14 @@ public class Player : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        PunEventSender.Instance.SendPlayerSpawned(photonView.ViewID);
-        health = MaxHealth;
+        if (photonView.IsMine)
+        {
+            Player.LocalPlayerInstance = this.gameObject;
+            PunEventSender.Instance.SendPlayerSpawned(photonView.ViewID);
+            health = MaxHealth;
+        }
+        DontDestroyOnLoad(this.gameObject);
+        
     }
 
     #region Health
@@ -43,6 +50,18 @@ public class Player : MonoBehaviourPunCallbacks
     {
         Debug.Log("Dead!!");
         UIManager.Instance.deathPanel.SetActive(true);
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(health);
+        }
+        else
+        {
+            this.health = (float)stream.ReceiveNext();
+        }
     }
     #endregion
 }

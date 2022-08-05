@@ -255,6 +255,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 1765635149742588518}
+  controller: {fileID: 0}
+  energyDissipationCoefficient: 5
 --- !u!114 &3539115270861988755
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -279,8 +281,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5244b19f348ec8940b3f74196e7bc090, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  abilities:
-  - {fileID: 11400000, guid: 5639f6f965a8d094a96ac6217aa57433, type: 2}
+  abilities: []
 --- !u!114 &7563715438660624777
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -314,6 +315,8 @@ MonoBehaviour:
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
+  - {fileID: 1765635149742588518}
+  - {fileID: 1765635149742588523}
   - {fileID: 1765635149742588512}
   sceneViewId: 0
   InstantiationId: 0
@@ -325,7 +328,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1765635149742588515}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
   m_Name: 
@@ -333,7 +336,7 @@ MonoBehaviour:
   m_SynchronizePosition: 1
   m_SynchronizeRotation: 1
   m_SynchronizeScale: 1
-  m_UseLocal: 1
+  m_UseLocal: 0
 --- !u!54 &8567265050373631539
 Rigidbody:
   m_ObjectHideFlags: 0

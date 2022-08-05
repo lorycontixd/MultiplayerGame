@@ -39,7 +39,7 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
         Player[] players = GameObject.FindObjectsOfType<Player>();
         foreach (Player player in players)
         {
-            if (player.MyView == viewID)
+            if (player.photonView.ViewID == viewID)
             {
                 return player;
             }
@@ -84,13 +84,16 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                 {
                     object[] data = (object[])photonEvent.CustomData;
                     int playerID = (int)data[0];
-                    Vector3 dir = (Vector3)data[1];
-                    float force = (float)data[2];
-                    Player player = GetPlayer(playerID);
-                    if (player != null)
+                    Vector3 force = (Vector3)data[1];
+                    GameObject[] playersGO = GameObject.FindGameObjectsWithTag("Player");
+                    foreach (GameObject go in playersGO)
                     {
-                        Rigidbody rb = player.gameObject.GetComponent<Rigidbody>();
-                        rb.AddForce(force * dir, ForceMode.VelocityChange);
+                        Player player = go.GetComponent<Player>();
+                        if (player.photonView.ViewID == playerID)
+                        {
+                            go.GetComponent<PlayerMovement>().AddForce(force);
+                            break;
+                        }
                     }
                 }
                 break;
@@ -103,10 +106,8 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                     foreach (GameObject go in playersGO)
                     {
                         Player player = go.GetComponent<Player>();
-                        Debug.Log($"Searching player for damage: {playerID}/{player.photonView.ViewID}");
                         if (player.photonView.ViewID == playerID)
                         {
-                            Debug.Log("Found!!");
                             player.TakeDamage(damage);
                         }
                     }
@@ -123,13 +124,32 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
             case PunEventSender.PickupPowerupCode:
                 {
                     object[] data = (object[])photonEvent.CustomData;
-                    int powerupIndex = (int)data[0];
+                    int playerID = (int)data[0];
+                    int powerupIndex = (int)data[1];
+                    GameObject player = null;
+                    GameObject[] playersGO = GameObject.FindGameObjectsWithTag("Player");
+                    foreach (GameObject go in playersGO)
+                    {
+                        Player p = go.GetComponent<Player>();
+                        if (p.photonView.ViewID == playerID)
+                        {
+                            player = go;
+                            break;
+                        }
+                    }
+                    if (player == null)
+                    {
+                        throw new UnityException($"Did not find a player with viewID {playerID} to give buff to.");
+                    }
+                    Debug.Log($"Giving buff to player with view {player.GetPhotonView()}");
+                    PlayerInteractor interactor = player.GetComponent<PlayerInteractor>();
+
                     PowerUp[] powerups = FindObjectsOfType<PowerUp>();
                     foreach (PowerUp powerup in powerups)
                     {
                         if (powerup.number == powerupIndex)
                         {
-                            Debug.Log($"Destroying buff with number {powerup.number}");
+                            StartCoroutine(interactor.OnPowerupPickup(powerup));
                             Destroy(powerup.gameObject);
                             break;
                         }

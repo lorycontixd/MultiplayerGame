@@ -9,43 +9,58 @@ public class PlayerInteractor : MonoBehaviourPunCallbacks
 {
     Player player;
 
+
     private void Start()
     {
-        player = GetComponent<Player>();
+        if (photonView.IsMine)
+        {
+            player = GetComponent<Player>();
+        }
     }
 
     public void OnCollisionEnter(Collision collision)
     {
-        if (!photonView.IsMine)
+        if (photonView.IsMine)
         {
-            return;
-        }
-        if (collision.collider.tag == "PowerUp")
-        {
-            PowerUp powerup = collision.gameObject.GetComponent<PowerUp>();
-            powerup.OnPickUp();
-            PunEventSender.Instance.SendPowerUpPickUp(powerup.number);
-            StartCoroutine(OnPowerupPickup(powerup.duration,powerup.statType, powerup.modifier));
+            if (collision.collider.tag == "Player")
+            {
+                Player otherPlayer = collision.collider.gameObject.GetComponent<Player>();
+                Vector3 force = collision.relativeVelocity;
+                PunEventSender.Instance.SendForce(otherPlayer.photonView.ViewID, force);
+                Debug.Log($"adding impact of {force}");
+            }
+            if (collision.collider.tag == "PowerUp")
+            {
+                PowerUp powerup = collision.gameObject.GetComponent<PowerUp>();
+                PunEventSender.Instance.SendPowerUpPickUp(photonView.ViewID, powerup.number);
+            }
         }
     }
 
-    private IEnumerator OnPowerupPickup(float duration, StatType statType, StatModifier mod)
+    public IEnumerator OnPowerupPickup(PowerUp powerup)
     {
-        switch (statType)
+        if (photonView.IsMine)
         {
-            case StatType.MoveSpeed:
-                player.MoveSpeed.AddModifier(mod);
-                Debug.Log("[+] New movespeed: " + player.MoveSpeed.Value);
-                yield return new WaitForSeconds(duration);
-                player.MoveSpeed.RemoveModifier(mod);
-                Debug.Log("[-] New movespeed: " + player.MoveSpeed.Value);
-                break;
-            case StatType.Damage:
-                player.Damage.AddModifier(mod);
-                Debug.Log("New damage: " + player.Damage.Value);
-                yield return new WaitForSeconds(duration);
-                player.Damage.RemoveModifier(mod);
-                break;
+            switch (powerup.statType)
+            {
+                case StatType.MoveSpeed:
+                    player.MoveSpeed.AddModifier(powerup.modifier);
+                    Debug.Log("[+] New movespeed: " + player.MoveSpeed.Value);
+                    yield return new WaitForSeconds(powerup.duration);
+                    player.MoveSpeed.RemoveModifier(powerup.modifier);
+                    Debug.Log("[-] New movespeed: " + player.MoveSpeed.Value);
+                    break;
+                case StatType.Damage:
+                    player.Damage.AddModifier(powerup.modifier);
+                    Debug.Log("New damage: " + player.Damage.Value);
+                    yield return new WaitForSeconds(powerup.duration);
+                    player.Damage.RemoveModifier(powerup.modifier);
+                    break;
+            }
         }
+    }
+
+    private void Update()
+    {
     }
 }
