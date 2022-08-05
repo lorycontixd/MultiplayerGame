@@ -24,7 +24,6 @@ public class Weapon : MonoBehaviourPunCallbacks
             Player otherPlayer = other.GetComponent<Player>();
             if (otherPlayer.photonView.ViewID != player.photonView.ViewID)
             {
-
                 PunEventSender.Instance.SendDamage(otherPlayer.photonView.ViewID, player.Damage.Value);
             }
         }

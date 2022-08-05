@@ -89,7 +89,6 @@ public class UIManager : MonoBehaviourPunCallbacks
 
     private void Update()
     {
-        Debug.Log("PING: "+PhotonNetwork.GetPing());
         if (NetworkManager.Instance.playersConnected)
         {
             // Players tab

@@ -65,7 +65,14 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                 break;
             case PunEventSender.StartGameCode:
                 {
-
+                    object[] data = (object[])photonEvent.CustomData;
+                    int playerID = (int)data[0];
+                    int spawnIndex = (int)data[1];
+                    Debug.Log(spawnIndex + " - " + PhotonNetwork.LocalPlayer.ActorNumber);
+                    if (playerID == PhotonNetwork.LocalPlayer.ActorNumber)
+                    {
+                        NetworkManager.Instance.StartGame(spawnIndex);
+                    }
                 }
                 break;
             case PunEventSender.PlayerSpawnedCode:
@@ -82,7 +89,6 @@ public class PunEventReceiver : MonoBehaviour, IOnEventCallback
                     Player player = GetPlayer(playerID);
                     if (player != null)
                     {
-                        Debug.Log($"I received a force of intensity {force}");
                         Rigidbody rb = player.gameObject.GetComponent<Rigidbody>();
                         rb.AddForce(force * dir, ForceMode.VelocityChange);
                     }

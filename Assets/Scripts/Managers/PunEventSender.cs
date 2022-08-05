@@ -54,9 +54,9 @@ public class PunEventSender : MonoBehaviourPunCallbacks
         PhotonNetwork.RaiseEvent(NotificationCode, content, raiseEventOptions, SendOptions.SendReliable);
     }
 
-    public void SendStartGame()
+    public void SendStartGame(int playerID, int spawnIndex)
     {
-        object[] content = new object[] { };
+        object[] content = new object[] { playerID, spawnIndex };
         RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All }; 
         PhotonNetwork.RaiseEvent(StartGameCode, content, raiseEventOptions, SendOptions.SendReliable);
     }

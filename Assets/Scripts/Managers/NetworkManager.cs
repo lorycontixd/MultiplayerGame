@@ -5,6 +5,7 @@ using UnityEngine.Events;
 using Photon.Pun;
 using Photon.Realtime;
 using Cinemachine;
+using System.Linq;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
@@ -32,13 +33,27 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public GameObject mainCamera;
 
     public bool playersConnected = false;
+    public int spawnedCount;
 
     public List<Transform> spawnPoints;
+    private static System.Random rng = new System.Random();
 
-    public void StartGame()
+    public void MasterPickSpawnpoints()
     {
-        int sp = Random.Range(0, spawnPoints.Count-1);
-        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name,spawnPoints[sp].position, Quaternion.identity);
+        if (PhotonNetwork.LocalPlayer.IsMasterClient)
+        {
+            var numberList = Enumerable.Range(0, spawnPoints.Count - 1).ToList();
+            var shuffledIndices = numberList.OrderBy(a => rng.Next()).ToList();
+            foreach (KeyValuePair<int, Photon.Realtime.Player> kvp in PhotonNetwork.CurrentRoom.Players)
+            {
+                PunEventSender.Instance.SendStartGame(kvp.Key, shuffledIndices[kvp.Key]);
+            }
+        }
+    }
+
+    public void StartGame(int spawnIndex)
+    {
+        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name,spawnPoints[spawnIndex].position, Quaternion.identity);
 
         virtualCamera.Follow = player.transform;
         virtualCamera.LookAt = player.transform;
@@ -77,7 +92,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         else if (PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
         {
             playersConnected = true;
-            StartGame();
+            MasterPickSpawnpoints();
         }
     }
 
@@ -105,7 +120,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
         {
             playersConnected = true;
-            StartGame();
+            MasterPickSpawnpoints();
         }
     }
 
